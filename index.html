@@ -23,6 +23,13 @@
     }
 
     header{background:var(--brand); color:#fff; padding:20px 0; box-shadow:0 4px 12px rgba(0,0,0,.1)}
+    .brand-logo{
+      display:block;
+      margin:0 auto 16px;
+      width:220px;
+      max-width:80%;
+      height:auto;
+    }
     /* containers at 75% width for responsiveness + iframe embeds */
     header .wrap{width:75vw; max-width:none; margin:0 auto; padding:0 24px; display:block}
     main.wrap{width:75vw; max-width:none; margin:0 auto; padding:40px 24px}
@@ -190,12 +197,13 @@
   <header>
     <div class="wrap">
       <div class="hero-text">
-        <!-- Inline SVG to keep it single-file/offline -->
-        <svg width="180" height="56" viewBox="0 0 300 94" role="img" aria-label="XINNIX Logo"
-             style="display:block;margin:0 auto 16px">
-          <rect x="0" y="0" width="300" height="94" fill="none"></rect>
-          <text x="50%" y="60%" text-anchor="middle" font-family="inherit" font-size="36" fill="#ffffff">XINNIX</text>
-        </svg>
+        <img
+          src="https://www.xinnix.com/hubfs/XINNIX%20Logos/XINNIX_Logo_Full_white.svg"
+          alt="XINNIX logo"
+          class="brand-logo"
+          loading="eager"
+          decoding="async"
+        />
         <h1>Mission Statement Builder</h1>
         <p>Create a focused, inspiring mission for the year — then align your roles and actions to fulfill it.</p>
         <div class="intro-box">
