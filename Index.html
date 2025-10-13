@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>XINNIX Mission Statement Builder</title>
+  <style>
+    :root{
+      --brand:#003366; --accent:#2bb7f5; --bg:#f4f7fb; --text:#0f172a; --muted:#5b6b7f;
+      --card:#ffffff; --border:#d9e2ef; --radius:16px; --shadow:0 8px 30px rgba(0,51,102,.08);
+      --roleRowH:260px;            /* fixed row height to show ~500 chars */
+      --roleNameCol:1fr;           /* 1/3 */
+      --affCol:2fr;                /* 2/3 */
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+                   Arial, "Noto Sans", "Liberation Sans", "Apple Color Emoji", "Segoe UI Emoji",
+                   "Segoe UI Symbol", sans-serif;
+      background:var(--bg); color:var(--text); line-height:1.6;
+    }
+
+    header{background:var(--brand); color:#fff; padding:20px 0; box-shadow:0 4px 12px rgba(0,0,0,.1)}
+    /* containers at 75% width for responsiveness + iframe embeds */
+    header .wrap{width:75vw; max-width:none; margin:0 auto; padding:0 24px; display:block}
+    main.wrap{width:75vw; max-width:none; margin:0 auto; padding:40px 24px}
+
+    .hero-text{text-align:center}
+    .hero-text h1{margin:0; font-size:36px; font-weight:700; letter-spacing:-.5px}
+    .hero-text p{margin:4px 0 0; color:#dbeafe; font-size:20px; font-weight:500; text-align:center}
+
+    .intro-box{
+      margin-top:24px; background:rgba(255,255,255,.1); padding:16px 20px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.2); font-size:10px; line-height:1.6; width:100%; max-width:none
+    }
+    .intro-box em{display:block}
+
+    .grid{display:block}
+    .card{
+      background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+      box-shadow:var(--shadow); padding:24px; margin-bottom:24px
+    }
+    .span-6,.span-8,.span-4,.span-12{display:block;width:100%}
+
+    .row{display:block}
+    .row>div{width:100%}
+    .row>div+div{margin-top:12px}
+    h2{color:var(--brand); margin-top:0; font-weight:700}
+    label{font-weight:600; display:block; margin-top:14px}
+
+    input,textarea,select{
+      width:100%; padding:12px; border:1px solid var(--border); border-radius:12px;
+      margin-top:6px; font-size:15px; background:#fff; min-height:44px; appearance:auto
+    }
+    textarea{min-height:96px}
+
+    @media (max-width:640px){
+      input,textarea,select,button{font-size:16px}
+      .btns{justify-content:flex-start}
+      header .wrap, main.wrap{width:94vw}
+    }
+
+    .btns{display:flex; flex-wrap:wrap; gap:10px; margin-top:14px}
+    button{
+      background:var(--brand); color:#fff; padding:10px 16px; border:0; border-radius:12px;
+      font-weight:700; cursor:pointer; transition:.2s
+    }
+    button:hover{background:#00264d}
+    button.ghost{background:transparent; color:var(--brand); border:1px solid var(--border)}
+    .hint{color:var(--muted); font-size:12px}
+    .badge{display:inline-flex; align-items:center; gap:6px; padding:3px 8px; border-radius:999px;
+           border:1px solid var(--border); font-size:12px; color:var(--muted)}
+
+    .selector{display:block}
+    .selected-list{display:block; padding:8px; border:1px dashed var(--border); border-radius:12px; background:#f7faff}
+
+    /* role row: fixed height, grid 1/3 + 2/3 + handle */
+    .role-item{
+      display:grid;
+      grid-template-columns: var(--roleNameCol) var(--affCol) 44px;
+      gap:12px;
+      padding:12px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#fff;
+      align-items:stretch;
+      min-height:var(--roleRowH);
+      height:var(--roleRowH);
+      user-select:none;
+      overflow:visible; /* keep borders visible */
+    }
+    /* Center the role name box; keep textarea left-aligned */
+    .role-name{
+      display:grid;
+      grid-template-rows: 1fr auto;  /* title then actions */
+      align-items:center;
+      justify-items:center;
+      text-align:center;
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:12px;
+      background:#fbfdff;
+      min-height:100%;
+    }
+    .role-name .title{font-weight:600; color:var(--brand); word-break:break-word}
+    .role-name .actions{display:flex; gap:8px; align-items:center; justify-content:center; margin-top:8px}
+    .role-name .actions .danger{
+      background:#b91c1c; color:#fff; border:0; border-radius:10px; padding:8px 10px; font-weight:700
+    }
+
+    /* affirmation box: scrolling content, borders intact */
+    .aff-box{
+      display:flex;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:#fff;
+      min-height:100%;
+      overflow:auto;
+      box-sizing:border-box;
+    }
+    .aff-box textarea{
+      flex:1 1 auto;
+      width:100%;
+      height:auto;
+      min-height:0;
+      resize:none;
+      border:0;
+      outline:0;
+      padding:12px;
+      line-height:1.4;       /* compact to fit ~500 chars */
+      font-size:14px;
+      text-align:left;
+      box-sizing:border-box;
+    }
+
+    .drag{
+      cursor:grab; display:flex; align-items:center; justify-content:center;
+      border:1px dashed var(--border); border-radius:10px; background:#f9fbff; font-size:20px; min-height:100%;
+    }
+    .drag:active{cursor:grabbing}
+
+    /* final section */
+    .final-card{width:100%; margin:0}
+    .final-card h3{margin:0 0 10px; font-size:22px; color:var(--brand); text-align:center}
+    .output{
+      white-space:pre-wrap; background:#f7faff; border:2px solid var(--accent); border-radius:14px;
+      padding:24px; min-height:180px; font-size:18px; font-weight:500; color:var(--brand); line-height:1.85
+    }
+
+    footer{background:var(--brand); color:#fff; text-align:center; padding:24px; font-size:14px; margin-top:40px}
+  </style>
+
+  <style media="print">
+    @page{margin:20mm}
+    body{background:#fff; color:#000; -webkit-print-color-adjust:exact; print-color-adjust:exact}
+    header{display:none!important}
+    footer{display:none!important}
+    .grid > .card:not(.final-card){display:none!important}
+    .btns{display:none!important}
+    .card{box-shadow:none; border-color:#bbb}
+    .print-header{
+      display:block!important; background:linear-gradient(90deg,#003366,#2bb7f5); color:#fff;
+      padding:18px 20px; border-radius:10px; margin-bottom:12px; font-size:18px
+    }
+    .output{background:#f7fbff; border:1px solid #2bb7f5; border-left:6px solid #2bb7f5}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="hero-text">
+        <!-- Inline SVG to keep it single-file/offline -->
+        <svg width="180" height="56" viewBox="0 0 300 94" role="img" aria-label="XINNIX Logo"
+             style="display:block;margin:0 auto 16px">
+          <rect x="0" y="0" width="300" height="94" fill="none"></rect>
+          <text x="50%" y="60%" text-anchor="middle" font-family="inherit" font-size="36" fill="#ffffff">XINNIX</text>
+        </svg>
+        <h1>Mission Statement Builder</h1>
+        <p>Create a focused, inspiring mission for the year — then align your roles and actions to fulfill it.</p>
+        <div class="intro-box">
+          <h2 style="color:#fff;margin:0 0 6px 0;font-weight:700;font-size:20px">Why You Need a Mission Statement</h2>
+          <p style="margin:6px 0">Clarity creates momentum.</p>
+          <p style="margin:6px 0">A personal mission gives you purpose, focus, and direction — so your daily choices match your values and goals.</p>
+          <p style="margin:6px 0">It’s your compass and your fuel.</p>
+          <p style="margin:6px 0">Read it daily to stay intentional, confident, and energized.</p>
+          <p style="margin:6px 0">By the end, you’ll have a clear, powerful statement you can act on — starting now.</p>
+          <p style="margin:6px 0 0 0">You are responsible. Your future is bright. Let’s go.</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="grid">
+      <div class="card span-6">
+        <h2>About You</h2>
+        <div class="row">
+          <div>
+            <label for="yourName">Your Name</label>
+            <input type="text" id="yourName" placeholder="e.g., Casey" />
+          </div>
+          <div>
+            <label for="year">Focus Year</label>
+            <input type="number" id="year" placeholder="2025" />
+          </div>
+        </div>
+        <label for="values">Core Values (comma-separated)</label>
+        <input type="text" id="values" placeholder="e.g., Courage, Excellence, Compassion" />
+        <label for="themes">Big Themes for this Year</label>
+        <input type="text" id="themes" placeholder="e.g., Health, Simplicity, Deep Work" />
+        <label for="obg">One Big Goal (OBG)</label>
+        <input type="text" id="obg" placeholder="e.g., Launch a new initiative in Q2" />
+      </div>
+
+      <div class="card span-6">
+        <h2>People You Admire (Top 3)</h2>
+        <p class="hint">List three people you admire and the specific characteristics you admire in them.</p>
+        <div class="row">
+          <div>
+            <label for="p1">Person 1</label>
+            <input id="p1" type="text" placeholder="Name" />
+          </div>
+          <div>
+            <label for="t1">Characteristics</label>
+            <input id="t1" type="text" placeholder="e.g., integrity, grit, curiosity" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="p2">Person 2</label>
+            <input id="p2" type="text" placeholder="Name" />
+          </div>
+          <div>
+            <label for="t2">Characteristics</label>
+            <input id="t2" type="text" placeholder="e.g., service, courage, excellence" />
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="p3">Person 3</label>
+            <input id="p3" type="text" placeholder="Name" />
+          </div>
+          <div>
+            <label for="t3">Characteristics</label>
+            <input id="t3" type="text" placeholder="e.g., wisdom, curiosity, resilience" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card span-6">
+        <h2>Life Roles — Pick 7, Prioritize, and Write 99-Year Affirmations</h2>
+        <p class="hint">Select exactly seven roles from the dropdown, then drag to set priority. Each row has a 500-character box.</p>
+        <div class="selector">
+          <div class="row">
+            <div>
+              <label for="roleSelect">Choose a role to add</label>
+              <select id="roleSelect">
+                <option value="" selected disabled>— Select a role —</option>
+                <option>Parent</option><option>Partner/Spouse</option><option>Friend</option><option>Leader</option>
+                <option>CEO/Founder</option><option>Manager</option><option>Team Member</option><option>Teacher/Coach</option>
+                <option>Student/Learner</option><option>Community Volunteer</option><option>Citizen/Advocate</option><option>Neighbor</option>
+                <option>Mentor</option><option>Mentee</option><option>Health/Athlete</option><option>Spiritual/Faith</option>
+                <option>Finances/Wealth Builder</option><option>Creator/Artist</option><option>Homemaker</option><option>Sibling</option>
+                <option>Child</option><option>Grandparent</option><option>Entrepreneur</option><option>Investor</option>
+                <option>Salesperson</option><option>Marketer</option><option>Writer</option><option>Speaker</option>
+                <option>Engineer</option><option>Designer</option><option>Product Manager</option><option>Researcher</option>
+                <option>Consultant</option><option>Board Member</option><option>Caregiver</option><option>Adventurer/Traveler</option>
+                <option>Philanthropist</option><option>Organizer</option><option>Strategist</option><option>Operator</option>
+                <option>Visionary</option><option>Connector</option><option>Host</option><option>Peacemaker</option>
+                <option>Innovator</option><option>Lifelong Learner</option><option>Storyteller</option><option>Coach</option>
+                <option>Protector</option><option>Servant Leader</option>
+              </select>
+              <div id="rolePickerFallback" class="mobile-role-fallback" style="display:none; margin-top:8px;"></div>
+            </div>
+            <div style="align-self:end; display:flex; align-items:center; gap:10px;">
+              <button id="addRole" type="button">Add Role</button>
+              <span class="badge"><span id="roleCount">0</span>/7 selected</span>
+              <span id="status" class="hint" aria-live="polite"></span>
+            </div>
+          </div>
+
+          <label>Selected roles (drag to reorder priority)</label>
+          <div id="selectedList" class="selected-list" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="card span-6">
+        <h2>Key Questions</h2>
+        <label for="purpose">Why does your work (and life) matter?</label>
+        <textarea id="purpose" placeholder="Because…"></textarea>
+        <label for="strengths">What strengths will you lean on?</label>
+        <textarea id="strengths" placeholder="e.g., resilience, storytelling, systems thinking"></textarea>
+        <label for="fears">What fears/constraints will you face — and how will you respond?</label>
+        <textarea id="fears" placeholder="Name the obstacle, name your response."></textarea>
+        <label for="habits">Which 3–5 habits will you practice weekly?</label>
+        <textarea id="habits" placeholder="e.g., 5 a.m. workout, deep work blocks, weekly review, connection calls"></textarea>
+      </div>
+
+      <div class="card span-12 final-card">
+        <h3>Your Mission Statement</h3>
+        <p class="hint" style="text-align:center;margin-top:-6px">Includes date written, a bold mission paragraph, your prioritized roles, and Affirmations @ 99.</p>
+        <div id="printHeader" class="print-header" style="display:none;background:#003366;color:#fff;padding:16px 18px;border-radius:12px;text-align:center;font-weight:700;letter-spacing:.5px"></div>
+        <div id="missionOutput" class="output"></div>
+        <div class="btns" style="justify-content:center;">
+          <button id="generate" type="button">Generate Mission</button>
+          <button id="copy" type="button" class="ghost">Copy</button>
+          <button id="downloadTxt" type="button" class="ghost">Download .txt</button>
+          <button id="printPdf" type="button" class="ghost">Print / Save PDF</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    © 2025 XINNIX, Inc. All rights reserved. Empowering leaders to transform their purpose into action.
+  </footer>
+
+  <script>
+    function $(q,el){el=el||document;return el.querySelector(q)}
+    function createEl(tag,attrs={},children=[]){
+      var el=document.createElement(tag);
+      for(var k in attrs){if(!Object.prototype.hasOwnProperty.call(attrs,k))continue;
+        var v=attrs[k]; if(k==='class')el.className=v; else if(k==='text')el.textContent=v; else if(k==='html')el.innerHTML=v; else el.setAttribute(k,v);
+      }
+      for(var i=0;i<children.length;i++)el.appendChild(children[i]); return el;
+    }
+    function uid(){return Math.random().toString(36).slice(2,9)}
+    function notify(msg,isErr){const s=$("#status"); if(!s){(console[isErr?'warn':'log']||console.log)(msg); return;} s.textContent=msg; s.style.color=isErr?'#b91c1c':'#0f766e'; clearTimeout(notify._t); notify._t=setTimeout(()=>s.textContent='',3000)}
+
+    var ROLES=['Parent','Partner/Spouse','Friend','Leader','CEO/Founder','Manager','Team Member','Teacher/Coach','Student/Learner','Community Volunteer','Citizen/Advocate','Neighbor','Mentor','Mentee','Health/Athlete','Spiritual/Faith','Finances/Wealth Builder','Creator/Artist','Homemaker','Sibling','Child','Grandparent','Entrepreneur','Investor','Salesperson','Marketer','Writer','Speaker','Engineer','Designer','Product Manager','Researcher','Consultant','Board Member','Caregiver','Adventurer/Traveler','Philanthropist','Organizer','Strategist','Operator','Visionary','Connector','Host','Peacemaker','Innovator','Lifelong Learner','Storyteller','Coach','Protector','Servant Leader'];
+
+    (function populateRoles(){
+      var rs=document.getElementById('roleSelect'); if(!rs) return;
+      if(rs.options.length<=1){ ROLES.forEach(r=> rs.appendChild(new Option(r,r)))}
+    })();
+
+    function audienceForRole(name){
+      var n=String(name||'').toLowerCase();
+      var map=[
+        [/^parent$/,'your children'],[/^(partner|spouse)$/,'your spouse/partner'],[/^friend$/,'your closest friends'],
+        [/^leader$/,'your team'],[/^ceo|founder$/,'your company'],[/^manager$/,'your team'],[/^team member$/,'your teammates'],
+        [/^teacher|coach$/,'your students/coachees'],[/^student|learner$/,'your mentors'],[/^community volunteer$/,'your community'],
+        [/^citizen|advocate$/,'your community'],[/^neighbor$/,'your neighbors'],[/^mentor$/,'your mentees'],[/^mentee$/,'your mentors'],
+        [/^health|athlete$/,'your future self'],[/^spiritual|faith$/,'those you worship with'],[/^finances|wealth/,'your future family'],
+        [/^creator|artist$/,'your audience'],[/^homemaker$/,'your family'],[/^sibling$/,'your siblings'],[/^child$/,'your parent(s)'],
+        [/^grandparent$/,'your grandchildren'],[/^entrepreneur$/,'your customers and team'],[/^investor$/,'your partners'],
+        [/^salesperson$/,'your clients'],[/^marketer$/,'your market'],[/^writer$/,'your readers'],[/^speaker$/,'your audience'],
+        [/^engineer$/,'the people who use your products'],[/^designer$/,'the people who experience your work'],
+        [/^product manager$/,'your product team and users'],[/^researcher$/,'your field and peers'],[/^consultant$/,'your clients'],
+        [/^board member$/,'your stakeholders'],[/^caregiver$/,'those you care for'],[/^(adventurer|traveler)$/,'your travel companions and future self'],
+        [/^philanthropist$/,'the people you serve'],[/^organizer$/,'your community'],[/^strategist$/,'your leadership peers'],
+        [/^operator$/,'your organization'],[/^visionary$/,'those you inspire'],[/^connector$/,'your network'],[/^host$/,'your guests'],
+        [/^peacemaker$/,'those you reconcile'],[/^innovator$/,'your industry'],[/^lifelong learner$/,'your future self'],
+        [/^storyteller$/,'your audience'],[/^coach$/,'your athletes/clients'],[/^protector$/,'those you protect'],[/^servant leader$/,'the people you serve']
+      ];
+      for(var i=0;i<map.length;i++){ if(map[i][0].test(n)) return map[i][1]; }
+      return 'the people you serve';
+    }
+
+    var selected=[]; // {id,name}
+    var selectedList=document.getElementById('selectedList');
+    var roleCount=document.getElementById('roleCount');
+    function updateRoleCount(){ if(roleCount) roleCount.textContent=selected.length; }
+
+    function removeRole(id){
+      var idx=selected.findIndex(r=>r.id===id); if(idx>=0) selected.splice(idx,1);
+      var item=selectedList.querySelector('.role-item[data-id="'+id+'"]'); if(item) item.remove();
+      updateRoleCount(); saveState();
+    }
+
+    function roleItem(role){
+      var item=createEl('div',{class:'role-item',draggable:'true','data-id':role.id});
+
+      var left=createEl('div',{class:'role-name'});
+      left.appendChild(createEl('div',{class:'title',text:role.name}));
+      var actions=createEl('div',{class:'actions'});
+      var rm=createEl('button',{class:'danger',text:'Remove',type:'button'});
+      rm.addEventListener('click',()=>removeRole(role.id));
+      actions.appendChild(rm); left.appendChild(actions);
+
+      var mid=createEl('div',{class:'aff-box'});
+      var ta=createEl('textarea',{
+        id:`aff_${role.id}`, maxlength:'500',
+        placeholder:`What would you want ${audienceForRole(role.name)} to say about you at 99?`,
+        'aria-label':`${role.name} affirmation (max 500 characters)`
+      });
+      mid.appendChild(ta);
+
+      var drag=createEl('div',{class:'drag',text:'⋮⋮'});
+
+      item.appendChild(left); item.appendChild(mid); item.appendChild(drag);
+
+      item.addEventListener('dragstart',e=>{ item.classList.add('dragging'); e.dataTransfer.setData('text/plain',role.id); });
+      item.addEventListener('dragend',()=> item.classList.remove('dragging'));
+
+      ta.addEventListener('input',()=>saveState());
+      return item;
+    }
+
+    var roleSelect=document.getElementById('roleSelect');
+    document.getElementById('addRole').addEventListener('click',function(e){
+      e.preventDefault();
+      if(selected.length>=7){ notify('You already have 7 roles.',true); return; }
+      var name=roleSelect.value; if(!name){ notify('Choose a role first.',true); roleSelect.focus(); return; }
+      if(selected.some(r=>r.name===name)){ notify('Role already added.',true); return; }
+      var role={id:uid(),name}; selected.push(role); selectedList.appendChild(roleItem(role));
+      updateRoleCount(); roleSelect.selectedIndex=0; saveState();
+    });
+
+    selectedList.addEventListener('dragover',function(e){
+      e.preventDefault();
+      const dragging=selectedList.querySelector('.role-item.dragging');
+      const after=getDragAfterElement(selectedList, e.clientY);
+      if(!dragging) return;
+      if(after==null) selectedList.appendChild(dragging); else selectedList.insertBefore(dragging, after);
+    });
+    function getDragAfterElement(container,y){
+      var els=[...container.querySelectorAll('.role-item:not(.dragging)')];
+      var closest={offset:Number.NEGATIVE_INFINITY,element:null};
+      for(var i=0;i<els.length;i++){
+        var box=els[i].getBoundingClientRect();
+        var offset=y - box.top - box.height/2;
+        if(offset<0 && offset>closest.offset){ closest={offset,element:els[i]}; }
+      }
+      return closest.element;
+    }
+
+    /* touch-friendly pointer drag */
+    let ptrDragEl=null;
+    selectedList.addEventListener('pointerdown',e=>{
+      const item=e.target.closest('.role-item'); if(!item) return;
+      ptrDragEl=item; item.setPointerCapture(e.pointerId);
+    });
+    selectedList.addEventListener('pointermove',e=>{
+      if(!ptrDragEl) return;
+      const after=getDragAfterElement(selectedList, e.clientY);
+      if(after==null) selectedList.appendChild(ptrDragEl); else selectedList.insertBefore(ptrDragEl, after);
+    });
+    selectedList.addEventListener('pointerup',()=>{ ptrDragEl=null; saveState(); });
+
+    function orderedRoles(){
+      return [...selectedList.querySelectorAll('.role-item')].map(el=>{
+        const id=el.getAttribute('data-id');
+        const f=selected.find(r=>r.id===id);
+        return f?f.name:'';
+      }).filter(Boolean);
+    }
+    function collectAffs(){
+      const map={};
+      selected.forEach(r=>{
+        var el=document.getElementById('aff_'+r.id);
+        map[r.name]=el?(el.value||'').trim():'';
+      });
+      return map;
+    }
+
+    function composeMissionText({name,year,values,themes,obg,purpose,strengths,fears,habits,traits,roles,affs,date}){
+      const clean=s=>(s&&s.trim())?s.trim():'—';
+      const uniqTraits=Array.from(new Set((traits||[]).filter(Boolean)));
+      const topTraits=uniqTraits.slice(0,6);
+      const s1=`${name?name.toUpperCase()+': ':''}I am on a mission${year?` in ${year}`:''} to bring ${clean(obg)==='—'?'my boldest vision':clean(obg)} to life — with relentless energy, fierce focus, and a bias for action.`;
+      const s1b=`Rooted in my core values — ${clean(values)} — and guided by this year’s themes — ${clean(themes)} — I will decide, act, and lead with courage every single day.`;
+      const s2=`I will embody what I admire most — ${topTraits.length?topTraits.join(', '):'character, courage, and excellence'} — and multiply my unique strengths (${clean(strengths)}) to advance a purpose that truly matters: ${clean(purpose)}.`;
+      const s3=`When resistance shows up (${clean(fears)}), I will answer with disciplined habits (${clean(habits)}) that compound — building momentum week after week.`;
+      const s4=`I will live out my priorities through these seven important roles:`;
+      const dateStr=(date||new Date()).toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+      const affBlock=(roles||[]).map((r,i)=>`${i+1}. ${r}: ${(affs&&affs[r])||''}`).join('\n');
+      return [`Date Written: ${dateStr}`,'',s1,'',s1b,'',s2,'',s3,'',s4,'',affBlock].join('\n');
+    }
+
+    document.getElementById('generate').addEventListener('click',function(){
+      const roles=orderedRoles();
+      if(roles.length!==7){ notify('Select exactly 7 roles.',true); return; }
+      const name=$('#yourName').value.trim();
+      const year=$('#year').value.trim();
+      const values=$('#values').value.trim();
+      const themes=$('#themes').value.trim();
+      const obg=$('#obg').value.trim();
+      const purpose=$('#purpose').value.trim();
+      const strengths=$('#strengths').value.trim();
+      const fears=$('#fears').value.trim();
+      const habits=$('#habits').value.trim();
+      const affs=collectAffs();
+      const full=composeMissionText({name,year,values,themes,obg,purpose,strengths,fears,habits,traits:[],roles,affs});
+      $('#missionOutput').textContent=full;
+
+      const header = name?`${name.toUpperCase()} — MISSION STATEMENT`:'MISSION STATEMENT';
+      const ph=document.getElementById('printHeader'); if(ph) ph.textContent=`XINNIX • ${header}`;
+      notify('Mission generated.');
+      saveState();
+    });
+
+    /* clipboard with fallback for non-secure origins */
+    function legacyCopy(text){
+      const ta=document.createElement('textarea');
+      ta.value=text; ta.setAttribute('readonly',''); ta.style.position='fixed'; ta.style.top='-9999px';
+      document.body.appendChild(ta); ta.select();
+      try{ document.execCommand('copy'); notify('Copied.'); }catch(e){ notify('Copy failed.',true); }
+      document.body.removeChild(ta);
+    }
+    function copyMission(){
+      const t=$('#missionOutput').textContent.trim(); if(!t){ notify('Nothing to copy.',true); return; }
+      if(window.isSecureContext && navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(t).then(()=>notify('Copied.'),()=>legacyCopy(t));
+      } else { legacyCopy(t); }
+    }
+    document.getElementById('copy').addEventListener('click', copyMission);
+
+    /* download .txt (offline-safe) */
+    document.getElementById('downloadTxt').addEventListener('click', ()=>{
+      const t=$('#missionOutput').textContent.trim(); if(!t){ notify('Generate first.',true); return; }
+      const a=document.createElement('a');
+      a.href='data:text/plain;charset=utf-8,'+encodeURIComponent(t);
+      a.download='mission-statement.txt';
+      document.body.appendChild(a); a.click(); a.remove();
+    });
+
+    /* print */
+    document.getElementById('printPdf').addEventListener('click',()=>window.print());
+
+    /* persistence */
+    var STORAGE_KEY='msb_state_v1';
+    function currentState(){
+      return {
+        name:$('#yourName').value||'', year:$('#year').value||'', values:$('#values').value||'',
+        themes:$('#themes').value||'', obg:$('#obg').value||'', purpose:$('#purpose').value||'',
+        strengths:$('#strengths').value||'', fears:$('#fears').value||'', habits:$('#habits').value||'',
+        roles:orderedRoles(), affs:collectAffs(), mission:$('#missionOutput').textContent||''
+      };
+    }
+    function saveState(){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(currentState())); }catch(e){} }
+    function loadState(){
+      const raw=localStorage.getItem(STORAGE_KEY); if(!raw) return;
+      try{ applyState(JSON.parse(raw)); }catch(e){}
+    }
+    function applyState(s){
+      if(!s||typeof s!=='object') return;
+      $('#yourName').value=s.name||''; $('#year').value=s.year||new Date().getFullYear();
+      $('#values').value=s.values||''; $('#themes').value=s.themes||''; $('#obg').value=s.obg||'';
+      $('#purpose').value=s.purpose||''; $('#strengths').value=s.strengths||'';
+      $('#fears').value=s.fears||''; $('#habits').value=s.habits||'';
+      selected.splice(0,selected.length); selectedList.innerHTML='';
+      if(Array.isArray(s.roles)){
+        s.roles.forEach(name=>{
+          const role={id:uid(),name}; selected.push(role);
+          const el=roleItem(role); selectedList.appendChild(el);
+          if(s.affs && typeof s.affs[name]==='string'){
+            const ta=el.querySelector('#aff_'+role.id); if(ta) ta.value=s.affs[name];
+          }
+        });
+        updateRoleCount();
+      }
+      $('#missionOutput').textContent=s.mission||'';
+    }
+
+    function debounce(fn,ms){ms=(ms==null)?400:ms;var t;return function(){clearTimeout(t);var args=arguments;t=setTimeout(function(){fn.apply(null,args)},ms)}}
+    var autosave=debounce(()=>saveState(),600);
+    document.addEventListener('input',e=>{var t=e.target;if(t && (t.matches? t.matches('input, textarea, select'):/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) autosave();});
+    document.addEventListener('change',e=>{var t=e.target;if(t && (t.matches? t.matches('input, textarea, select'):/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) autosave();});
+
+    document.getElementById('year').value=new Date().getFullYear();
+    loadState();
+  </script>
+</body>
+</html>
