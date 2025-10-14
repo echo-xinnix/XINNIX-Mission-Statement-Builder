@@ -431,7 +431,13 @@
       var header=createEl('div',{class:'role-name'});
       header.appendChild(createEl('div',{class:'title',text:role.name}));
       var actions=createEl('div',{class:'actions'});
-      var rm=createEl('button',{class:'danger',text:'Remove',type:'button'});
+     var rm=createEl('button',{
+  class:'danger remove-btn',
+  type:'button',
+  'aria-label':'Remove role'
+});
+rm.innerHTML = '<span class="btn-label">Remove</span>';
+
       rm.addEventListener('click',()=>removeRole(role.id));
       actions.appendChild(rm);
       header.appendChild(actions);
@@ -648,4 +654,5 @@
   </script>
 </body>
 </html>
+
 
