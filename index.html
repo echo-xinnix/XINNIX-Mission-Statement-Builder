@@ -50,7 +50,13 @@
       width:100%; padding:6px; border:1px solid var(--border); border-radius:12px;
       margin-top:3px; font-size:15px; background:#fff; min-height:44px; appearance:auto
     }
-    textarea{min-height:96px}
+    /* Lock textareas to vertical-only resizing (prevents horizontal drag) */
+    textarea{
+      min-height:96px;
+      resize:vertical;
+      max-width:100%;
+      overflow:auto;
+    }
 
     @media (max-width:640px){
       input,textarea,select,button{font-size:16px}
@@ -327,7 +333,7 @@
       <div class="card span-12 final-card">
         <h3>Your Mission Statement</h3>
         <p class="hint" style="text-align:center;margin-top:-3px">Includes date written, a bold mission paragraph, your prioritized roles, and Affirmations @ 99.</p>
-        <div id="printHeader" class="print-header" style="display:none;background:#00366;color:#fff;padding:8px 9px;border-radius:12px;text-align:center;font-weight:700;letter-spacing:.5px"></div>
+        <div id="printHeader" class="print-header" style="display:none;background:#003366;color:#fff;padding:8px 9px;border-radius:12px;text-align:center;font-weight:700;letter-spacing:.5px"></div>
         <div id="missionOutput" class="output"></div>
         <div class="btns" style="justify-content:center;">
           <button id="generate" type="button">Generate Mission</button>
